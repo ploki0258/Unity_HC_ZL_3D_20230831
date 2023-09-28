@@ -1,54 +1,111 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.AI;
+using System.Collections;
 
 public class Enemy : MonoBehaviour
 {
-	[SerializeField, Header("²¾°Ê³t«×"), Range(0, 10)]
-	public float speed = 2.5f;
-	[SerializeField, Header("§ğÀ»§N«o"), Range(0, 10)]
-	public float attackCD = 2.5f;
+	#region æ¬„ä½
+	[SerializeField, Header("ç§»å‹•é€Ÿåº¦"), Range(0, 10)]
+	private float speed = 2.5f;
+	[SerializeField, Header("æ”»æ“Šå†·å»"), Range(0, 10)]
+	private float attackCD = 2.5f;
+	[SerializeField, Header("æ”»æ“Šå€åŸŸ")]
+	private GameObject attackArea = null;
+	[SerializeField, Header("å•Ÿå‹•æ”»æ“Šå€åŸŸæ™‚é–“"), Range(0, 5), Tooltip("å•Ÿå‹•æ”»æ“Šå€åŸŸæ™‚é–“")]
+	private float showAttackAreaTime = 1.5f;
+	[SerializeField, Header("å•Ÿå‹•æ”»æ“Šå€åŸŸæŒçºŒæ™‚é–“"), Range(0, 5), Tooltip("å•Ÿå‹•æ”»æ“Šå€åŸŸæŒçºŒæ™‚é–“")]
+	private float showAttackAreaDurationTime = 0.5f;
 
-	[Tooltip("AI¥N²z¾¹")]
-	private NavMeshAgent agent; // AI¥N²z¾¹
-	[Tooltip("¥Ø¼Ğª±®a")]
-	private Transform target;   // ¥Ø¼Ğª±®a
-	[Tooltip("°Êµe±±¨î¾¹")]
-	private Animator ani;       // °Êµe±±¨î¾¹
-	private string parWalk = "¶}Ãö¨«¸ô";
-	private string parAttack = "Ä²µo§ğÀ»";
+	[Tooltip("AIä»£ç†å™¨")]
+	private NavMeshAgent agent; // AIä»£ç†å™¨
+	[Tooltip("ç›®æ¨™ç©å®¶")]
+	private Transform target;   // ç›®æ¨™ç©å®¶
+	[Tooltip("å‹•ç•«æ§åˆ¶å™¨")]
+	private Animator ani;       // å‹•ç•«æ§åˆ¶å™¨
+	private string parWalk = "é–‹é—œèµ°è·¯";
+	private string parAttack = "è§¸ç™¼æ”»æ“Š";
+	[Tooltip("å¯å¦æ”»æ“Š")]
+	private bool canAttack = true;
+	#endregion
 
 	private void Awake()
 	{
-		// ¥N²z¾¹ = ¨ú±o¤¸¥ó<NavMeshAgent>()
+		// ä»£ç†å™¨ = å–å¾—å…ƒä»¶<NavMeshAgent>()
 		agent = GetComponent<NavMeshAgent>();
-		// °Êµe±±¨î¾¹ = ¨ú±o¤¸¥ó<Animator>()
+		// å‹•ç•«æ§åˆ¶å™¨ = å–å¾—å…ƒä»¶<Animator>()
 		ani = GetComponent<Animator>();
-		// ¥N²z¾¹.³t«× = ²¾°Ê³t«×
+		// ä»£ç†å™¨.é€Ÿåº¦ = ç§»å‹•é€Ÿåº¦
 		agent.speed = speed;
-		// ¥Ø¼Ğ = ¹CÀ¸ª«¥ó.´M§ä("¥Ø¼Ğ¦WºÙ").transform
-		target = GameObject.Find("¤p®ã¤ü").transform;
+		// ç›®æ¨™ = éŠæˆ²ç‰©ä»¶.å°‹æ‰¾("ç›®æ¨™åç¨±").transform
+		target = GameObject.Find("å°æŸ´çŠ¬").transform;
+
+		//StartCoroutine(Test());
 	}
 
 	private void Update()
 	{
-		// ¥N²z¾¹.³]©w¥Øªº¦a(¥Ø¼Ğ.®y¼Ğ)
+		// ä»£ç†å™¨.è¨­å®šç›®çš„åœ°(ç›®æ¨™.åº§æ¨™)
 		agent.SetDestination(target.position);
 
-		Debug.Log($"<color=#f69>¶ZÂ÷¡G{agent.remainingDistance}</color>");
+		//Debug.Log($"<color=#f69>è·é›¢ï¼š{agent.remainingDistance}</color>");
 
-		// ¦pªG »Pª±®a¶¡ªº¶ZÂ÷ ¤j©ó °±¤î¶ZÂ÷(©|¥¼¾aªñª±®a)
+		// å¦‚æœ èˆ‡ç©å®¶é–“çš„è·é›¢ å¤§æ–¼ åœæ­¢è·é›¢(å°šæœªé è¿‘ç©å®¶)
 		if (agent.remainingDistance > agent.stoppingDistance)
 		{
-			// ¼½©ñ¨«¸ô°Êµe
+			// æ’­æ”¾èµ°è·¯å‹•ç•«
 			ani.SetBool(parWalk, true);
 		}
-		// §_«h¦pªG »Pª±®a¶¡ªº¶ZÂ÷ ¤£µ¥©ó 0
+		// å¦å‰‡å¦‚æœ èˆ‡ç©å®¶é–“çš„è·é›¢ ä¸ç­‰æ–¼ 0
 		else if (agent.remainingDistance != 0)
 		{
-			// ¼½©ñ§ğÀ»°Êµe
-			ani.SetTrigger(parAttack);
-			// °±¤î¤£²¾°Ê
-			agent.isStopped = true;
+			// å¦‚æœ å¯ä»¥æ”»æ“Šçš„è©± å°±å•Ÿå‹•æ”»æ“Šå”åŒç¨‹åº
+			if (canAttack == true) StartCoroutine(AttackEffect());
 		}
 	}
+
+	/// <summary>
+	/// æ”»æ“Šæ•ˆæœå”åŒç¨‹åº
+	/// </summary>
+	/// <returns></returns>
+	private IEnumerator AttackEffect()
+	{
+		// ä¸å¯æ”»æ“Š
+		canAttack = false;
+		// æ’­æ”¾æ”»æ“Šå‹•ç•«
+		ani.SetTrigger(parAttack);
+		// é¢å‘åº§æ¨™ = ç©å®¶çš„åº§æ¨™
+		Vector3 look = target.position;
+		// é¢å‘åº§æ¨™.y = è‡ªå·±çš„åº§æ¨™.y
+		look.y = transform.position.y;
+		// é¢å‘(é¢å‘åº§æ¨™)
+		transform.LookAt(look);
+		// åœæ­¢ä¸ç§»å‹•
+		agent.isStopped = true;
+		// ç­‰å¾…1ç§’å¾Œ
+		yield return new WaitForSeconds(showAttackAreaTime);
+		// é¡¯ç¤ºæ”»æ“Šå€åŸŸ
+		attackArea.SetActive(true);
+		// ç­‰å¾…0.5ç§’å¾Œ
+		yield return new WaitForSeconds(showAttackAreaDurationTime);
+		// éš±è—æ”»æ“Šå€åŸŸ
+		attackArea.SetActive(false);
+		// ç­‰å¾…å‹•ç•« (æ”»æ“ŠçµæŸé¦¬ä¸Šæ¢å¾©ç­‰å¾…å‹•ç•«)
+		ani.SetBool(parWalk, false);
+		// ç­‰å¾…1.5ç§’å¾Œ
+		yield return new WaitForSeconds(attackCD);
+		// å¯æ”»æ“Š
+		canAttack = true;
+		// å¯ä»¥è¿½è¹¤
+		agent.isStopped = false;
+	}
+
+	/*private IEnumerator Test()
+	{
+		yield return new WaitForSeconds(3);
+		Debug.Log("ç¬¬ä¸€è¡Œ");
+		yield return new WaitForSeconds(1);
+		Debug.Log("ç¬¬äºŒè¡Œ");
+		yield return new WaitForSeconds(2);
+		Debug.Log("ç¬¬ä¸‰è¡Œ");
+	}*/
 }
